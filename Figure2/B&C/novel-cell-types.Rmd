@@ -6,6 +6,13 @@ output: html_document
 ```{r, message=FALSE, warning=FALSE}
 library("knitr")
 library("BiocStyle")
+library(monocle)
+library(Hmisc)
+BiocManager::install(c("monocle"))
+
+devtools::install_github("kassambara/ggpubr")
+library(ggpubr)
+
 
 .cran_packages <- c("tidyverse", "Hmisc", "tsne")
 .bioc_packages <- c("monocle")
@@ -46,6 +53,8 @@ load("../singleCell/Brian-Barron/GersteinResearch/18-07-19-Monocle.RData")
 x <- HSMM.reduced.clust@reducedDimA 
 adf <- HSMM.reduced.clust@phenoData@data %>%
   data.frame
+
+write.csv(plotdf, file = "~/Downloads/novel-cell-types_plotdf.csv")
 ```
 
 ```{r}
@@ -96,6 +105,8 @@ plotdf %>%
 
 ```
 
+# Figure 2C
+## Boxplot of relative abundances of each cluster by patient
 
 ```{r}
 df <- plotdf %>%
@@ -106,14 +117,41 @@ df <- plotdf %>%
   mutate(batch_total = sum(n)) %>%
   mutate(n.fraction = n / batch_total)
 
+df <- 
+  df %>%
+  select(-n.fraction, -batch_total) %>%
+  spread(cluster.named, n) %>%
+  mutate(`B cells` = ifelse(is.na(`B cells`), 0, `B cells`)) %>%
+  gather(-batch, -group, key = "cluster.named", value = "n") %>%
+  group_by(batch) %>%
+  mutate(batch_total = sum(n)) %>%
+  mutate(n.fraction = n / batch_total)
+
+wtpvals.greater <- list()
+for (c in unique(df$cluster.named)) {
+  wtpvals.greater[[c]] <- wilcox.test(n.fraction ~ group, data = df[df$cluster.named == c,], alternative = "greater")$p.value
+}
+
+mye.annot <- wtpvals.greater %>% unlist
+```
+
+```{r}
 df %>%
-  ggplot() +
-  geom_boxplot(aes(x = cluster.named, y = n.fraction, fill = group)) +
-  theme_bw() +
+  ggplot(aes(cluster.named, n.fraction)) +
+  geom_boxplot(aes(fill = group)) +
+  geom_signif(y_position = c(0.8), 
+                xmin=c(1.8), 
+                xmax = c(2.2),
+                annotation = c(paste0("p-value = ", round(mye.annot[2], 2))), 
+                tip_length = 0.02,
+              textsize = 3.8) +
+  theme_minimal() +
   labs(x = "Cluster",
        y = "Fraction of Cells") +
   ggsave("../figures/monocle-clusters_boxplot.pdf", height = 3, width = 6)
+  
 ```
+
 
 Which are signficantly different between asthmatics and controls? This will have a strong effect on the value of the interpretation. That is, if a new cell type is discovered that's significantly different between asthmatics and controls, that's more valuable in this context than a novel cell type that's the same in each.
 
@@ -141,7 +179,8 @@ for (c in z$cluster.named) {
 }
 
 ct %>%
-  unlist
+  unlist %>%
+  p.adjust(., method = "fdr")
 ```
 
 The myeloid cells are both significantly different between asthmatics and controls and visually have a lot of overlap. I'll see if I can split them into two clusters. 
