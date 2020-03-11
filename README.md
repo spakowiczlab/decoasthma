@@ -7,4 +7,4 @@ The manuscript has been posted on bioRxiv, here:
 
  And is currently under review at Genome Biology.
 
-The data are being submitted to dbGaP under BioProject SUB7102729 and is available through academic collaboration. Please contact daniel.spakowicz@osumc.edu with any questions. 
+The data are being submitted to dbGaP under BioProject SUB7102729 and are available through academic collaboration. Please contact daniel.spakowicz@osumc.edu with any questions. 
