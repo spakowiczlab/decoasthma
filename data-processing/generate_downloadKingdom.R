@@ -2,8 +2,7 @@
 # generate_downloadKingdom.R
 # 
 # Script to generate a file with a series of wget commands to download the most 
-# recent release of ensemble genomes. To be executed with slurm on grace-
-# next and either mapped directly using STAR or added to the exceRpt pipeline
+# recent release of ensemble genomes.
 # 
 # Created 04 Jun 2017 by DS
 
